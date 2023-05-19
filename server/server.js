@@ -1,16 +1,18 @@
 import * as http from 'http';
 import next from 'next';
 
-const with_next = process.argv[2] === "with-next";
+const with_next_fix = process.argv[2] === "with-next-fix";
+const with_next = with_next_fix || process.argv[2] === "with-next";
 
 const app = with_next && next({ dev: true });
 let handle = null;
+let upgrade = null;
 
 if (app) {
     app.prepare().then(() => handle = app?.getRequestHandler());
 }
-
-http.createServer((req, res) => {
+let server;
+server = http.createServer((req, res) => {
     if (req.url === "/ws/html") {
         res.end(`
 <html lang="en">
@@ -30,7 +32,11 @@ http.createServer((req, res) => {
         // imagine a websocket library here
         res.writeHead(501);
         res.end();
+    } else if (upgrade && req.url === "/_next/webpack-hmr") {
+        upgrade(req, res.socket, Buffer.from([]))
     } else if (handle) {
+        if (with_next_fix)
+            server.on = (_, f) => upgrade = f;
         handle(req, res);
     } else if (with_next) {
         res.writeHead(503);

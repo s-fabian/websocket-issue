@@ -17,14 +17,14 @@
 5. The server doesn't receive the request, doesn't log "Websocket trying to connect!"
 6. No event is triggered on the websocket
 
-## Tested scenarios
+## Solution: `yarn with-next-fix`
 
-| OS               | Node    | Next.js | Browser                | Works |
-|------------------|---------|---------|------------------------|-------|
-| Windows 11       | 18.16.0 | 13.4.3  | Firefox 113.0.1        | no    |
-| Windows 11       | 18.15.0 | 13.4.3  | Firefox 113.0.1        | no    |
-| Windows 11       | 18.15.0 | 13.4.3  | Chrome 113.0.5672.127  | no    |
-| Wsl2 Debian 11.5 | 18.16.0 | 13.4.3  | Chrome 113.0.5672.127  | no    |
-| Wsl2 Debian 11.5 | 18.16.0 | 13.4.3  | Firefox 113.0.5672.127 | no    |
-| Windows 11       | 18.16.0 | 13.2.3  | Firefox 113.0.5672.127 | no    |
-| Windows 11       | 18.16.0 | 12.3.4  | Firefox 113.0.5672.127 | no    |
+How? Well, the problem is caused by `app?.getRequestHandler()()`.
+
+This function adds a listener onto the server matching the `upgrade` event.
+
+This can be prevented by overriding the function that's used to add an event listener
+into caching the function for the event handler into a local variable.
+
+Now you can call this variable if the url matches `/_next/webpack-hmr`,
+otherwise you can use your own websocket logic.
